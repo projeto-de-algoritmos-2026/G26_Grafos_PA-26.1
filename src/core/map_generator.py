@@ -14,7 +14,7 @@ def generate_map(m: int, n: int) -> list[list[int]]:
         0.1,   # Pântano
         0.15,  # Água
         0.05,  # Montanha
-        0.05   # Abismo
+        0.05   # Falha na matrix
     ]
 
     grid = []

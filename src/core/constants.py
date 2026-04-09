@@ -17,5 +17,5 @@ TYPES = {
     5: TypeTerrain("Pântano", 20, (72, 61, 139)),    # Roxo/Azulado escuro
     6: TypeTerrain("Água", 22, (30, 144, 255)),      # Azul
     7: TypeTerrain("Montanha", 60, (139, 137, 137)), # Cinza pedra
-    8: TypeTerrain("Abismo", 1000000, (0, 0, 0)),    # Preto
+    8: TypeTerrain("Falha na Matrix", float('inf'), (0, 0, 0)),    # Preto
 }
