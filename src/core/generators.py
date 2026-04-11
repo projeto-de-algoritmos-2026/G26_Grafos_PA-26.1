@@ -35,7 +35,7 @@ def generate_map(m: int, n: int) -> list[list[TypeTerrain]]:
             else:
                 terrain = TYPES[7]  # Montanha
 
-            if random.random() < 0.07:  # 7% de chance de ser falha na matrix
+            if random.random() < 0.03:  # 3% de chance de ser falha na matrix
                 terrain = TYPES[8]
 
             row.append(terrain)

@@ -1,8 +1,9 @@
 import pygame
 import sys
+import time  # <-- IMPORTANTE: Biblioteca nativa para medir o tempo do algoritmo
 
 from src.core.generators import generate_map
-from src.core.constants import TYPES
+from src.core.dijkstra import get_cheapest_path
 
 # --- CONSTANTES DE TELA E UI ---
 LARGURA_PAINEL = 250
@@ -71,11 +72,17 @@ def main():
 
     mapa_grid = generate_map(dimensao_atual, dimensao_atual)
     mapa_surface, tamanho_bloco = criar_superficie_mapa(mapa_grid, dimensao_atual)
-    mapa_surface_zoom = mapa_surface.copy() # Cópia em cache para otimização
+    mapa_surface_zoom = mapa_surface.copy()
 
     ponto_start = None
     ponto_final = None
+    menor_caminho = []
     estado_atual = "ESPERANDO"
+
+    # --- VARIÁVEIS DE ESTATÍSTICA DO ALGORITMO ---
+    tempo_execucao = 0.0
+    custo_total = 0
+    qtd_passos = 0
 
     # --- DEFINIÇÃO DOS RETÂNGULOS DA UI ---
     caixa_dimensao = pygame.Rect(25, 45, 185, 30)
@@ -97,36 +104,26 @@ def main():
             if evento.type == pygame.MOUSEWHEEL:
                 mx, my = pygame.mouse.get_pos()
 
-                # Verifica se o clique foi na área do mapa (fora do painel)
                 if mx >= LARGURA_PAINEL:
-                    # Posição relativa do mouse na área do mapa (descontando o painel)
                     rel_mouse_x = mx - LARGURA_PAINEL
                     rel_mouse_y = my
 
-                    # 1. Calcula onde o mouse estava NO MAPA ORIGINAL antes do zoom
                     world_x_antes = (rel_mouse_x - camera_x) / zoom_level
                     world_y_antes = (rel_mouse_y - camera_y) / zoom_level
 
-                    # 2. Altera o nível de zoom
                     fator = 0.5
-                    if evento.y > 0 and zoom_level < 5.0: # Rolar para cima
+                    if evento.y > 0 and zoom_level < 5.0:
                         zoom_level += fator
-                    elif evento.y < 0 and zoom_level > 1.0: # Rolar para baixo
+                    elif evento.y < 0 and zoom_level > 1.0:
                         zoom_level -= fator
 
-                    # 3. Atualiza a Surface cacheada do mapa com o novo zoom
                     nova_largura = int(mapa_surface.get_width() * zoom_level)
                     nova_altura = int(mapa_surface.get_height() * zoom_level)
                     mapa_surface_zoom = pygame.transform.scale(mapa_surface, (nova_largura, nova_altura))
 
-                    # 4. Calcula a NOVA POSIÇÃO DA CÂMERA para centralizar no mouse
-                    # Com o novo zoom, queremos que o ponto original permaneça sob o mouse.
-                    # rel_mouse_x = (world_x_antes * zoom_level) + nova_camera_x
-                    # Isolando nova_camera_x:
                     camera_x = rel_mouse_x - (world_x_antes * zoom_level)
                     camera_y = rel_mouse_y - (world_y_antes * zoom_level)
 
-                    # 5. Garante que a câmera não fique presa fora dos limites
                     limite_x = min(0, MAX_LARGURA_MAPA - nova_largura)
                     limite_y = min(0, ALTURA_TELA - nova_altura)
                     camera_x = max(limite_x, min(0, camera_x))
@@ -141,7 +138,7 @@ def main():
                         texto_dimensao += evento.unicode
 
             # --- INICIAR ARRASTO DA CÂMERA ---
-            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3: # Botão Direito
+            if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 3:
                 if mouse_x >= LARGURA_PAINEL:
                     arrastando_mapa = True
                     inicio_arrasto_mouse = mouse_pos
@@ -170,7 +167,6 @@ def main():
                         mapa_grid = generate_map(dimensao_atual, dimensao_atual)
                         mapa_surface, tamanho_bloco = criar_superficie_mapa(mapa_grid, dimensao_atual)
 
-                        # Reseta a câmera e o zoom ao gerar um novo mapa
                         zoom_level = 1.0
                         camera_x = 0
                         camera_y = 0
@@ -178,6 +174,11 @@ def main():
 
                         ponto_start = None
                         ponto_final = None
+                        menor_caminho = []
+                        # Limpando as estatísticas
+                        tempo_execucao = 0.0
+                        custo_total = 0
+                        qtd_passos = 0
                         estado_atual = "ESPERANDO"
 
                     elif btn_start.collidepoint(mouse_pos):
@@ -189,9 +190,28 @@ def main():
                     elif btn_dijkstra.collidepoint(mouse_pos):
                         if ponto_start and ponto_final:
                             estado_atual = "CALCULANDO"
+
+                            # --- 1. INICIA O CRONÔMETRO ---
+                            inicio_tempo = time.perf_counter()
+
+                            menor_caminho = get_cheapest_path(mapa_grid, ponto_start, ponto_final)
+
+                            # --- 2. PARA O CRONÔMETRO ---
+                            fim_tempo = time.perf_counter()
+                            tempo_execucao = (fim_tempo - inicio_tempo) * 1000 # Convertendo para milissegundos
+
+                            # --- 3. CALCULA CUSTO E PASSOS ---
+                            if menor_caminho and len(menor_caminho) > 1:
+                                qtd_passos = len(menor_caminho) - 1 # Remove o nó inicial da contagem de passos
+                                # Soma o peso de todos os terrenos visitados (pulando o primeiro nó)
+                                custo_total = sum(mapa_grid[p[0]][p[1]].weight for p in menor_caminho[1:])
+                            else:
+                                qtd_passos = 0
+                                custo_total = 0
+
                             estado_atual = "ESPERANDO"
 
-                # 2. Clique no Mapa (Direita) - Atualizado com a Matemática da Câmera
+                # 2. Clique no Mapa (Direita)
                 elif mouse_x >= LARGURA_PAINEL:
                     rel_mouse_x = mouse_x - LARGURA_PAINEL
 
@@ -201,18 +221,20 @@ def main():
                     coluna_clicada = world_x // tamanho_bloco
                     linha_clicada = world_y // tamanho_bloco
 
-                    # Verifica se o clique foi dentro dos limites válidos do mapa
                     if 0 <= linha_clicada < dimensao_atual and 0 <= coluna_clicada < dimensao_atual:
                         terreno_clicado = mapa_grid[linha_clicada][coluna_clicada]
 
-                        # Só permite a seleção se o terreno NÃO for uma "Falha na Matrix" (peso infinito)
                         if terreno_clicado.weight != float('inf'):
                             if estado_atual == "SELECIONANDO_START":
                                 ponto_start = (linha_clicada, coluna_clicada)
+                                menor_caminho = []
+                                tempo_execucao, custo_total, qtd_passos = 0, 0, 0
                                 estado_atual = "ESPERANDO"
 
                             elif estado_atual == "SELECIONANDO_FINAL":
                                 ponto_final = (linha_clicada, coluna_clicada)
+                                menor_caminho = []
+                                tempo_execucao, custo_total, qtd_passos = 0, 0, 0
                                 estado_atual = "ESPERANDO"
 
 
@@ -222,11 +244,9 @@ def main():
                     dx = mouse_pos[0] - inicio_arrasto_mouse[0]
                     dy = mouse_pos[1] - inicio_arrasto_mouse[1]
 
-                    # Calcula nova posição provisória
                     nova_camera_x = inicio_arrasto_camera[0] + dx
                     nova_camera_y = inicio_arrasto_camera[1] + dy
 
-                    # Limita para não arrastar o mapa para fora da tela
                     limite_x = min(0, MAX_LARGURA_MAPA - mapa_surface_zoom.get_width())
                     limite_y = min(0, ALTURA_TELA - mapa_surface_zoom.get_height())
 
@@ -237,11 +257,10 @@ def main():
         # --- RENDERIZAÇÃO ---
         tela.fill((0, 0, 0))
 
-        # 1. Desenhar o Mapa (Agora blitado na posição da câmera usando o cache do zoom)
         tela.blit(mapa_surface_zoom, (LARGURA_PAINEL + camera_x, camera_y))
 
-        # 1.5 Desenhar os pontos Start e Final no Mapa (Acompanhando o Zoom e Câmera)
         tamanho_bloco_zoom = tamanho_bloco * zoom_level
+
         if ponto_start:
             px = LARGURA_PAINEL + camera_x + (ponto_start[1] * tamanho_bloco_zoom)
             py = camera_y + (ponto_start[0] * tamanho_bloco_zoom)
@@ -253,6 +272,26 @@ def main():
             py = camera_y + (ponto_final[0] * tamanho_bloco_zoom)
             pygame.draw.rect(tela, COR_FINAL, (px, py, tamanho_bloco_zoom, tamanho_bloco_zoom))
             pygame.draw.rect(tela, (255, 255, 255), (px, py, tamanho_bloco_zoom, tamanho_bloco_zoom), 2)
+
+        if menor_caminho:
+            pontos_linha = []
+
+            for passo in menor_caminho:
+                linha_passo = passo[0]
+                coluna_passo = passo[1]
+
+                px = LARGURA_PAINEL + camera_x + (coluna_passo * tamanho_bloco_zoom)
+                py = camera_y + (linha_passo * tamanho_bloco_zoom)
+
+                centro_x = px + (tamanho_bloco_zoom / 2)
+                centro_y = py + (tamanho_bloco_zoom / 2)
+
+                pontos_linha.append((centro_x, centro_y))
+
+            espessura_linha = max(2, int(tamanho_bloco_zoom / 4))
+            cor_da_linha = (255, 0, 0) # Dourado
+
+            pygame.draw.lines(tela, cor_da_linha, False, pontos_linha, espessura_linha)
 
 
         # 2. Desenhar o Painel Lateral
@@ -292,9 +331,17 @@ def main():
         desenhar_texto(tela, txt_start, fonte, COR_START, 25, 385)
         desenhar_texto(tela, txt_final, fonte, COR_FINAL, 25, 415)
         desenhar_texto(tela, txt_estado, fonte, (200, 200, 200), 25, 455)
+        desenhar_texto(tela, f"Zoom: {zoom_level}x", fonte, (150, 150, 150), 25, 495)
 
-        # Opcional: mostrar o nível de zoom
-        desenhar_texto(tela, f"Zoom: {zoom_level}x", fonte, (150, 150, 150), 25, 500)
+        # --- Desenhando as Estatísticas (só aparecem se tiver caminho) ---
+        if menor_caminho:
+            pygame.draw.line(tela, (100, 100, 100), (25, 525), (210, 525), 1)
+            desenhar_texto(tela, "Performance do Algoritmo:", fonte, (200, 200, 200), 25, 540)
+
+            # Formata o tempo para mostrar no máximo 3 casas decimais
+            desenhar_texto(tela, f"Tempo: {tempo_execucao:.3f} ms", fonte, (135, 206, 235), 25, 570)
+            desenhar_texto(tela, f"Custo (Peso): {custo_total}", fonte, (255, 215, 0), 25, 600)
+            desenhar_texto(tela, f"Passos (Arestas): {qtd_passos}", fonte, (255, 100, 100), 25, 630)
 
         pygame.display.flip()
         clock.tick(FPS)
