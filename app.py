@@ -5,11 +5,12 @@ import time
 from src.core.generators import generate_map
 from src.core.dijkstra import get_cheapest_path
 from src.core.bfs import calcular_bfs
+from src.core.constants import TYPES
 
 # --- CONSTANTES DE TELA E UI ---
-LARGURA_PAINEL = 250
+LARGURA_PAINEL = 320
 MAX_LARGURA_MAPA = 800
-ALTURA_TELA = 800
+ALTURA_TELA = 850
 
 LARGURA_TELA_TOTAL = LARGURA_PAINEL + MAX_LARGURA_MAPA
 FPS = 60
@@ -79,6 +80,7 @@ def main():
     ponto_final = None
     menor_caminho = []
     estado_atual = "ESPERANDO"
+    algoritmo_usado = "Nenhum"
 
     # --- VARIÁVEIS DE ESTATÍSTICA DO ALGORITMO ---
     tempo_execucao = 0.0
@@ -86,12 +88,12 @@ def main():
     qtd_passos = 0
 
     # --- DEFINIÇÃO DOS RETÂNGULOS DA UI ---
-    caixa_dimensao = pygame.Rect(25, 45, 185, 30)
-    btn_gerar = pygame.Rect(25, 90, 185, 40)
-    btn_start = pygame.Rect(25, 150, 185, 40)
-    btn_final = pygame.Rect(25, 200, 185, 40)
-    btn_dijkstra = pygame.Rect(25, 280, 185, 40)
-    btn_bfs = pygame.Rect(25, 330, 185, 40)
+    caixa_dimensao = pygame.Rect(25, 45, 270, 30)
+    btn_gerar = pygame.Rect(25, 85, 270, 35)
+    btn_start = pygame.Rect(25, 130, 270, 35)
+    btn_final = pygame.Rect(25, 175, 270, 35)
+    btn_dijkstra = pygame.Rect(25, 230, 270, 35)
+    btn_bfs = pygame.Rect(25, 275, 270, 35)
 
     rodando = True
     while rodando:
@@ -192,6 +194,7 @@ def main():
                     elif btn_dijkstra.collidepoint(mouse_pos):
                         if ponto_start and ponto_final:
                             estado_atual = "CALCULANDO"
+                            algoritmo_usado = "Dijkstra"
 
                             # --- 1. INICIA O CRONÔMETRO ---
                             inicio_tempo = time.perf_counter()
@@ -216,6 +219,7 @@ def main():
                     elif btn_bfs.collidepoint(mouse_pos):
                         if ponto_start and ponto_final:
                             estado_atual = "CALCULANDO"
+                            algoritmo_usado = "BFS"
 
                             inicio_tempo = time.perf_counter()
 
@@ -343,28 +347,40 @@ def main():
         desenhar_botao(btn_dijkstra, "Rodar Dijkstra", (180, 140, 30))
         desenhar_botao(btn_bfs, "Rodar BFS", (140, 50, 180))
 
-        # --- Textos de Status no final ---
-        pygame.draw.line(tela, (100, 100, 100), (25, 340), (210, 340), 2)
-        desenhar_texto(tela, "Informações:", fonte, (200, 200, 200), 25, 355)
+        # --- LEGENDA DE CORES E CUSTOS ---
+        y_legenda = 325
+        pygame.draw.line(tela, (100, 100, 100), (25, y_legenda), (295, y_legenda), 2)
+        desenhar_texto(tela, "Legenda (Terreno: Custo)", fonte, (200, 200, 200), 25, y_legenda + 10)
+
+        for i, terreno in TYPES.items():
+            y_item = y_legenda + 35 + (i * 20)
+            pygame.draw.rect(tela, terreno.color, (25, y_item, 15, 15))
+            custo_str = "Infinito" if terreno.weight == float('inf') else str(terreno.weight)
+            desenhar_texto(tela, f"{terreno.name}: {custo_str}", fonte, (180, 180, 180), 50, y_item - 2)
+
+        # --- TEXTOS DE INFORMAÇÕES DO STATUS ---
+        y_info = 540
+        pygame.draw.line(tela, (100, 100, 100), (25, y_info), (295, y_info), 2)
+        desenhar_texto(tela, "Informações:", fonte, (200, 200, 200), 25, y_info + 10)
 
         txt_start = f"Início: {ponto_start}" if ponto_start else "Início: Não definido"
         txt_final = f"Destino: {ponto_final}" if ponto_final else "Destino: Não definido"
         txt_estado = f"Estado: {estado_atual}"
 
-        desenhar_texto(tela, txt_start, fonte, COR_START, 25, 385)
-        desenhar_texto(tela, txt_final, fonte, COR_FINAL, 25, 415)
-        desenhar_texto(tela, txt_estado, fonte, (200, 200, 200), 25, 455)
-        desenhar_texto(tela, f"Zoom: {zoom_level}x", fonte, (150, 150, 150), 25, 495)
+        desenhar_texto(tela, txt_start, fonte, COR_START, 25, y_info + 35)
+        desenhar_texto(tela, txt_final, fonte, COR_FINAL, 25, y_info + 55)
+        desenhar_texto(tela, txt_estado, fonte, (200, 200, 200), 25, y_info + 75)
+        desenhar_texto(tela, f"Zoom: {zoom_level}x", fonte, (150, 150, 150), 25, y_info + 95)
 
-        # --- Desenhando as Estatísticas (só aparecem se tiver caminho) ---
+        # --- ESTATÍSTICAS (SÓ APARECEM SE TIVER CAMINHO) ---
         if menor_caminho:
-            pygame.draw.line(tela, (100, 100, 100), (25, 525), (210, 525), 1)
-            desenhar_texto(tela, "Performance do Algoritmo:", fonte, (200, 200, 200), 25, 540)
+            pygame.draw.line(tela, (100, 100, 100), (25, y_info + 125), (295, y_info + 125), 1)
+            desenhar_texto(tela, "Performance do Algoritmo:", fonte, (200, 200, 200), 25, y_info + 140)
 
-            # Formata o tempo para mostrar no máximo 3 casas decimais
-            desenhar_texto(tela, f"Tempo: {tempo_execucao:.3f} ms", fonte, (135, 206, 235), 25, 570)
-            desenhar_texto(tela, f"Custo (Peso): {custo_total}", fonte, (255, 215, 0), 25, 600)
-            desenhar_texto(tela, f"Passos (Arestas): {qtd_passos}", fonte, (255, 100, 100), 25, 630)
+            desenhar_texto(tela, f"Algoritmo Utilizado: {algoritmo_usado}", fonte, (255, 255, 255), 25, y_info + 165)
+            desenhar_texto(tela, f"Tempo: {tempo_execucao:.3f} ms", fonte, (135, 206, 235), 25, y_info + 185)
+            desenhar_texto(tela, f"Custo (Peso Total): {custo_total}", fonte, (255, 215, 0), 25, y_info + 205)
+            desenhar_texto(tela, f"Passos Andados: {qtd_passos}", fonte, (255, 100, 100), 25, y_info + 225)
 
         pygame.display.flip()
         clock.tick(FPS)
