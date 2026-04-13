@@ -1,9 +1,10 @@
 import pygame
 import sys
-import time  # <-- IMPORTANTE: Biblioteca nativa para medir o tempo do algoritmo
+import time
 
 from src.core.generators import generate_map
 from src.core.dijkstra import get_cheapest_path
+from src.core.bfs import calcular_bfs
 
 # --- CONSTANTES DE TELA E UI ---
 LARGURA_PAINEL = 250
@@ -90,6 +91,7 @@ def main():
     btn_start = pygame.Rect(25, 150, 185, 40)
     btn_final = pygame.Rect(25, 200, 185, 40)
     btn_dijkstra = pygame.Rect(25, 280, 185, 40)
+    btn_bfs = pygame.Rect(25, 330, 185, 40)
 
     rodando = True
     while rodando:
@@ -211,6 +213,26 @@ def main():
 
                             estado_atual = "ESPERANDO"
 
+                    elif btn_bfs.collidepoint(mouse_pos):
+                        if ponto_start and ponto_final:
+                            estado_atual = "CALCULANDO"
+
+                            inicio_tempo = time.perf_counter()
+
+                            menor_caminho = calcular_bfs(mapa_grid, ponto_start, ponto_final)
+
+                            fim_tempo = time.perf_counter()
+                            tempo_execucao = (fim_tempo - inicio_tempo) * 1000
+
+                            if menor_caminho and len(menor_caminho) > 1:
+                                qtd_passos = len(menor_caminho) - 1
+                                custo_total = sum(mapa_grid[p[0]][p[1]].weight for p in menor_caminho[1:])
+                            else:
+                                qtd_passos = 0
+                                custo_total = 0
+
+                            estado_atual = "ESPERANDO"
+
                 # 2. Clique no Mapa (Direita)
                 elif mouse_x >= LARGURA_PAINEL:
                     rel_mouse_x = mouse_x - LARGURA_PAINEL
@@ -319,6 +341,7 @@ def main():
         desenhar_botao(btn_final, "Selecionar Final", cor_btn_f)
 
         desenhar_botao(btn_dijkstra, "Rodar Dijkstra", (180, 140, 30))
+        desenhar_botao(btn_bfs, "Rodar BFS", (140, 50, 180))
 
         # --- Textos de Status no final ---
         pygame.draw.line(tela, (100, 100, 100), (25, 340), (210, 340), 2)
