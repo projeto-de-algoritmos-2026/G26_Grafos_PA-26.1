@@ -94,7 +94,7 @@ O projeto utiliza um sistema de pesos para representar o custo de movimento em d
     <tr>
       <td><b>Falha na Matrix</b></td>
       <td>∞</td>
-      <td><b>Intransponível.</b> Corta a conexão entre as células.</td>
+      <td><b>Intransponível.</b> Corta a conexão entre as células. O algoritmo não pode andar sobre essa célula.</td>
       <td align="center">
         <img src="https://dummyimage.com/30x30/000000/ffffff.png&text=." />
       </td>
