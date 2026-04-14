@@ -30,7 +30,7 @@ O projeto utiliza um sistema de pesos para representar o custo de movimento em d
       <td>1</td>
       <td>-</td>
       <td align="center">
-        <img src="https://dummyimage.com/25x25/cccccc/000000.png" />
+        <img src="https://dummyimage.com/30x30/cccccc/000000.png&text=." />
       </td>
     </tr>
     <tr>
@@ -38,7 +38,7 @@ O projeto utiliza um sistema de pesos para representar o custo de movimento em d
       <td>2</td>
       <td>-</td>
       <td align="center">
-        <img src="https://dummyimage.com/25x25/93c47d/000000.png" />
+        <img src="https://dummyimage.com/30x30/93c47d/000000.png&text=." />
       </td>
     </tr>
     <tr>
@@ -46,7 +46,7 @@ O projeto utiliza um sistema de pesos para representar o custo de movimento em d
       <td>5</td>
       <td>-</td>
       <td align="center">
-        <img src="https://dummyimage.com/25x25/274e13/ffffff.png" />
+        <img src="https://dummyimage.com/30x30/274e13/ffffff.png&text=." />
       </td>
     </tr>
     <tr>
@@ -54,7 +54,7 @@ O projeto utiliza um sistema de pesos para representar o custo de movimento em d
       <td>8</td>
       <td>-</td>
       <td align="center">
-        <img src="https://dummyimage.com/25x25/f1c232/000000.png" />
+        <img src="https://dummyimage.com/30x30/f1c232/000000.png&text=." />
       </td>
     </tr>
     <tr>
@@ -62,7 +62,7 @@ O projeto utiliza um sistema de pesos para representar o custo de movimento em d
       <td>12</td>
       <td>-</td>
       <td align="center">
-        <img src="https://dummyimage.com/25x25/783f04/ffffff.png" />
+        <img src="https://dummyimage.com/30x30/783f04/ffffff.png&text=." />
       </td>
     </tr>
     <tr>
@@ -70,7 +70,7 @@ O projeto utiliza um sistema de pesos para representar o custo de movimento em d
       <td>20</td>
       <td>-</td>
       <td align="center">
-        <img src="https://dummyimage.com/25x25/741b47/ffffff.png" />
+        <img src="https://dummyimage.com/30x30/741b47/ffffff.png&text=." />
       </td>
     </tr>
     <tr>
@@ -78,7 +78,7 @@ O projeto utiliza um sistema de pesos para representar o custo de movimento em d
       <td>22</td>
       <td>-</td>
       <td align="center">
-        <img src="https://dummyimage.com/25x25/1c4587/ffffff.png" />
+        <img src="https://dummyimage.com/30x30/1c4587/ffffff.png&text=." />
       </td>
     </tr>
     <tr>
@@ -86,7 +86,7 @@ O projeto utiliza um sistema de pesos para representar o custo de movimento em d
       <td>60</td>
       <td>-</td>
       <td align="center">
-        <img src="https://dummyimage.com/25x25/434343/ffffff.png" />
+        <img src="https://dummyimage.com/30x30/434343/ffffff.png&text=." />
       </td>
     </tr>
     <tr>
@@ -94,7 +94,7 @@ O projeto utiliza um sistema de pesos para representar o custo de movimento em d
       <td>∞</td>
       <td><b>Intransponível.</b> Corta a conexão entre as células.</td>
       <td align="center">
-        <img src="https://dummyimage.com/25x25/000000/ffffff.png" />
+        <img src="https://dummyimage.com/30x30/000000/ffffff.png&text=." />
       </td>
     </tr>
   </tbody>
